@@ -1,0 +1,19 @@
+<launch>
+	<param name="/use_sim_time" value="true"/>
+	
+	<node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+		<remap from="cloud_in" to="os1_cloud_node/points"/>
+	</node>
+	
+	<node pkg="tf" type="static_transform_publisher" name="link_broadcaster" args="0 0 0 3.14 0 0 Robot_1/base_link os1_sensor 100" />
+	
+	<node name="slam_gmapping" pkg="gmapping" type="slam_gmapping">
+		<param name="base_frame" value="Robot_1/base_link"/>
+		<param name="odom_frame" value="world"/>		
+	</node>
+	
+	<!--  **************** Visualisation ****************  -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find project2)/rviz/gmapping.rviz"/>
+	
+	
+</launch>

@@ -1,0 +1,91 @@
+ID: 10523952
+Name: Kai
+Surname: de Gast
+
+Files description:
+project2/launch/amcl_test.launch: launch file used to start amcl.
+This launch file sets:
+	-use_sim_time = true 
+and instantiates:
+	-map_server that publishes the map on the /map topic
+	-amcl node using the project2/launch/include/amcl.launch file where all the parameters for amcl are specified.
+	-pointcloud_to_laserscan node that takes the pointcloud from /os1_cloud_node/points and publishes the laserscan on the /scan topic
+	-static_transform_publisher that publishes a static coordinate transform from the camera to the lidar in order to complete the tf tree
+	-**uncomment in file** to start ekf_localization node using project2/launch/ekf_localization.launch
+	-rviz by using the project2/rviz/robot_navigation.rviz configuration file
+
+project2/launch/cam_gmapping.launch: launch file used to start gmapping using the visual odometry.
+This launch file sets:
+	-use_sim_time = true 
+and instantiates:
+	-pointcloud_to_laserscan node that takes the pointcloud from /os1_cloud_node/points and publishes the laserscan on the /scan topic
+	-static_transform_publisher that publishes a static coordinate transform from the camera to the lidar in order to complete the tf tree
+	-gmapping node using the project2/launch/include/gmapping.launch file where all the parameters for gmapping are specified.
+	-**uncomment in file** to start ekf_localization node using project2/launch/ekf_localization.launch
+	-rviz by using the project2/rviz/gmapping.rviz configuration file
+
+project2/launch/opti_gmapping.launch: launch file used to start gmapping using the optitrack odometry.
+This launch file sets:
+	-use_sim_time = true 
+and istantiates:
+	-pointcloud_to_laserscan node that takes the pointcloud from /os1_cloud_node/points and publishes the laserscan on the /scan topic
+	-static_transform_publisher that publishes a static coordinate transform from the optitrack to the lidar in order to complete the tf tree
+	-gmapping node using the standard parameters, by just changing the base_frame and odom_frame values
+	-rviz by using the project2/rviz/gmapping.rviz configuration file
+
+project2/launch/ekf_localization.launch: launch file used to start the ekf_localization_node and the imu filters using project2/launch/include/imu_filter.launch.
+it takes as input the odometry and the 2 filtered IMUs.
+
+
+project2/launch/include/amcl.launch: contains all the parameters for amcl.
+
+project2/launch/include/gmapping.launch: contains all the parameters for amcl.
+Noticeably I tweaked the maxRange and maxUrange in order to completely map all the rooms the robot enters and the occ_thresh to make the small obstacles a bit more noticeable, but i ended up choosing to leave it at the default value since the improvement on the smaller obstacles was not worth the increased noise around certain parts of the wall.
+
+project2/launch/include/imu_filter.launch: starts the 2 filter nodes for the 2 IMUs.
+
+project2/maps contains:
+	-map.pgm (and the corresponding yaml file): map created by cam_gmapping.launch
+	-map_opti.pgm (and the corresponding yaml file): map created by opti_gmapping.launch
+
+project2/rviz/gmapping.rviz: configuration file for rviz that starts rviz with:
+	-grid
+	-tf
+	-LaserScan on /scan topic and uses Points as style
+	-Map on /map topic
+
+project2/rviz/robot_localization.rviz: configuration file for rviz that starts rviz with:
+	-grid
+	-tf
+	-LaserScan on /scan topic and uses Points as style
+	-Map on /map topic
+	-PoseArray on /PoseArray topic
+
+
+Tf tree: in the project2 directory there are 2 pictures, one showing the tf tree for the camera odometry and an other showing the one for the optitrack odometry
+
+The bag I used to create the maps is "2020-05-14-16-09-36-traj1-os1-t265-pix.bag", so to test the localization I used the "2020-05-14-16-14-37-traj2-os1-t265-pix.bag"
+
+
+Instructions:
+
+To start gmapping with optitrack run:
+1. roslaunch project2 opti_gmapping.launch
+2. start bag
+once gmapping has finisced
+3. rosrun map_server map_saver -f map
+
+To start gmapping with visual odometry run:
+1. roslaunch project2 cam_gmapping.launch
+2. start bag
+once gmapping has finisced
+3. rosrun map_server map_saver -f map
+
+To start amcl run:
+1. roslaunch project2 amcl_test.launch
+2. start bag
+
+Note1: cam_gmapping and amcl_test can be started with the fused odometry by uncommenting a line in the file (it is indicated in the file which one)
+
+Note2: I had some problems with the 2020-05-14-16-14-37-traj2-os1-t265-pix.bag that I used to test the localization, as sometimes rviz shows an error on Laserscan saying that /scan is not present. By closing and reopening the terminal or sometimes rebooting the laptop, it works. The other bag on the other hand has always worked on the first try.
+
